@@ -24,10 +24,15 @@ volatile uint32 total3ChainCount = 0;
 volatile uint32 total4ChainCount = 0;
 volatile uint32 total5ChainCount = 0;
 
-// shared
+// shared, cursors
+volatile uint32_t sieveCursor = 0xFFFFFFFF;
+volatile uint32_t sieveSeg = 1<<21;
+volatile uint32_t testCursor = 0xFFFFFFFF;
 
+// share workdata
+minerRiecoinBlock_t minerRiecoinBlock; 
 
-typedef struct  
+typedef struct
 {
 	char* workername;
 	char* workerpass;
@@ -74,7 +79,6 @@ struct
 uint32_t uniqueMerkleSeedGenerator;
 uint32 miningStartTime = 0;
 
-
 /*
  * Submit Riecoin share
  */
@@ -110,24 +114,16 @@ void xptMiner_submitShare(minerRiecoinBlock_t* block, uint8* nOffset)
 }
 
 #ifdef _WIN32
-int xptMiner_minerThread(int threadIndex)
-{
+int xptMiner_dataThread(int threadIndex)
 #else
-void *xptMiner_minerThread(void *arg)
-{
-	int threadIndex = (intptr_t)arg;
+void *xptMiner_dataThread(void *args)
 #endif
-
-	// local work data
-
-	minerRiecoinBlock_t minerRiecoinBlock; 
-
-	while( true )
-	{
+{
+	while (true){
 		// has work?
 		bool hasValidWork = false;
 		EnterCriticalSection(&workDataSource.cs_work);
-		if( workDataSource.height > 0 )
+		if( workDataSource.height > 0 && testCursor > 64 && sieveCursor > riecoin_primeTestSize)
 		{
 			switch( workDataSource.algorithm )
 			{
@@ -148,6 +144,8 @@ void *xptMiner_minerThread(void *arg)
 				bitclient_generateTxHash(sizeof(uint32), (uint8*)&minerRiecoinBlock.uniqueMerkleSeed, workDataSource.coinBase1Size, workDataSource.coinBase1, workDataSource.coinBase2Size, workDataSource.coinBase2, workDataSource.txHash, TX_MODE_DOUBLE_SHA256);
 				bitclient_calculateMerkleRoot(workDataSource.txHash, workDataSource.txHashCount+1, minerRiecoinBlock.merkleRoot, TX_MODE_DOUBLE_SHA256);
 				hasValidWork = true;
+				testCursor = 0;
+				sieveCursor = 0;
 				break;
 			}
 		}
@@ -157,24 +155,29 @@ void *xptMiner_minerThread(void *arg)
 			Sleep(1);
 			continue;
 		}
-		// valid work data present, start processing workload
+	}
+}
 
-		if( workDataSource.algorithm == ALGORITHM_RIECOIN )
+#ifdef _WIN32
+int xptMiner_minerThread(int threadIndex)
+{
+#else
+void *xptMiner_minerThread(void *arg)
+{
+	int threadIndex = (intptr_t)arg;
+#endif
+
+	while( true )
+	{
+		// valid work data present, start processing workload
+		if( workDataSource.algorithm == ALGORITHM_RIECOIN)
 		{
-#define DEBUG_TIMING 0
-#if DEBUG_TIMING
-		  struct timeval tv_start, tv_end;
-		  gettimeofday(&tv_start, NULL);
-#endif
+			if (workDataSource.height == 0 || minerRiecoinBlock.height != workDataSource.height){
+				Sleep(1);
+				continue;
+			}
 			riecoin_process(&minerRiecoinBlock);
-#if DEBUG_TIMING
-		  gettimeofday(&tv_end, NULL);
-		  double d = (double)tv_end.tv_sec;
-		  d += ((double)tv_end.tv_usec)/1000000.0;
-		  d -= tv_start.tv_sec;
-		  d -= ((double)tv_start.tv_usec)/1000000.0;
-		  printf("riecoin loop %.2f seconds\n", d);
-#endif
+			Sleep(1);
 		}
 		else
 		{
@@ -600,16 +603,23 @@ sysctl(mib, 2, &numcpu, &len, NULL, 0);
 	minerSettings.requestTarget.authUser = commandlineInput.workername;
 	minerSettings.requestTarget.authPass = commandlineInput.workerpass;
 	minerSettings.requestTarget.donationPercent = commandlineInput.donationPercent;
+
+#ifdef _WIN32
+		CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)xptMiner_dataThread, (LPVOID)0, 0, NULL);
+#else
+		pthread_attr_t threadAttr;
+		pthread_attr_init(&threadAttr);
+		// Set the stack size of the thread
+		pthread_attr_setstacksize(&threadAttr, 120*1024);
+		// free resources of thread upon return
+		pthread_attr_setdetachstate(&threadAttr, PTHREAD_CREATE_DETACHED);
+		pthread_t dataThread;
+		pthread_create(&dataThread, &threadAttr, xptMiner_dataThread, NULL);
+#endif
+
 	// start miner threads
-#ifndef _WIN32
-	
+#ifndef _WIN32	
 	pthread_t threads[commandlineInput.numThreads];
-	pthread_attr_t threadAttr;
-	pthread_attr_init(&threadAttr);
-	// Set the stack size of the thread
-	pthread_attr_setstacksize(&threadAttr, 120*1024);
-	// free resources of thread upon return
-	pthread_attr_setdetachstate(&threadAttr, PTHREAD_CREATE_DETACHED);
 #endif
 	for(uint32 i=0; i<commandlineInput.numThreads; i++)
 #ifdef _WIN32

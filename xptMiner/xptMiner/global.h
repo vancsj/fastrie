@@ -155,3 +155,10 @@ extern volatile uint32 total5ChainCount;
 
 extern volatile uint32 monitorCurrentBlockHeight;
 extern volatile uint32 monitorCurrentBlockTime;
+
+extern volatile uint32_t sieveCursor;
+extern volatile uint32_t sieveSeg;
+extern volatile uint32_t testCursor;
+
+extern minerRiecoinBlock_t minerRiecoinBlock;
+extern uint32_t riecoin_primeTestSize;
