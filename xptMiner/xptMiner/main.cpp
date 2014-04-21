@@ -7,7 +7,7 @@
 #define MAX_TRANSACTIONS	(4096)
 
 // miner version string (for pool statistic)
-char* minerVersionString = "xptMiner 1.7dga-b14";
+char* minerVersionString = "xptMiner 1.8";
 
 minerSettings_t minerSettings = {0};
 
@@ -22,7 +22,7 @@ volatile uint32 totalRejectedShareCount = 0;
 volatile uint32 total2ChainCount = 0;
 volatile uint32 total3ChainCount = 0;
 volatile uint32 total4ChainCount = 0;
-
+volatile uint32 total5ChainCount = 0;
 
 typedef struct  
 {
@@ -253,12 +253,12 @@ void xptMiner_xptQueryWorkLoop()
 {
 	// init xpt connection object once
 	xptClient = xptMiner_initateNewXptConnectionObject();
-	uint32 timerPrintDetails = getTimeMilliseconds() + 8000;
+	uint32 timerPrintDetails = getTimeMilliseconds() + 10000;
 
 	if(minerSettings.requestTarget.donationPercent > 0.1f)
 	{
-	  float donAmount = minerSettings.requestTarget.donationPercent;
-	  xptClient_addDeveloperFeeEntry(xptClient, "RUhMA8bvsr48aC3WVj3aGf5p1zytPSz59o", getFeeFromDouble(donAmount), false);  // dga
+		float donAmount = minerSettings.requestTarget.donationPercent;
+		xptClient_addDeveloperFeeEntry(xptClient, "RUhMA8bvsr48aC3WVj3aGf5p1zytPSz59o", getFeeFromDouble(donAmount), false);  // dga
 	}
 	while( true )
 	{
@@ -276,14 +276,17 @@ void xptMiner_xptQueryWorkLoop()
 					float speedRate_2ch = 0.0f;
 					float speedRate_3ch = 0.0f;
 					float speedRate_4ch = 0.0f;
+					float speedRate_5ch = 0.0f;
 
 					if( passedSeconds > 5 )
 					{
-						speedRate_2ch = (double)total2ChainCount * 4096.0 / (double)passedSeconds / 1000.0;
-						speedRate_3ch = (double)total3ChainCount * 4096.0 / (double)passedSeconds / 1000.0;
-						speedRate_4ch = (double)total4ChainCount * 4096.0 / (double)passedSeconds / 1000.0;
+						speedRate_2ch = (double)total2ChainCount / (double)passedSeconds;
+						speedRate_3ch = (double)total3ChainCount / (double)passedSeconds;
+						speedRate_4ch = (double)total4ChainCount * 3600.0 / (double)passedSeconds;
+						speedRate_5ch = (double)total5ChainCount * 3600.0 * 24.0 / (double)passedSeconds;
 					}
-					printf("[%02d:%02d:%02d] 2ch/s: %.4lf 3ch/s: %.4lf 4ch/s: %.4lf Shares total: %d / %d\n", (passedSeconds/3600)%60, (passedSeconds/60)%60, (passedSeconds)%60, speedRate_2ch, speedRate_3ch, speedRate_4ch, totalShareCount, totalShareCount-totalRejectedShareCount);
+					printf("[%02d:%02d:%02d] 2ch/s: %.4lf 3ch/s: %.4lf 4ch/h: %.4lf 5ch/d: %.4lf Shares total: %d / %d\n", (passedSeconds/3600)%60, (passedSeconds/60)%60, 
+						(passedSeconds)%60, speedRate_2ch, speedRate_3ch, speedRate_4ch, speedRate_5ch, totalShareCount, totalShareCount-totalRejectedShareCount);
 					fflush(stdout);
 				}
 
@@ -344,16 +347,16 @@ void xptMiner_xptQueryWorkLoop()
 			EnterCriticalSection(&cs_xptClient);
 			xptClient = xptMiner_initateNewXptConnectionObject();
 
-	if(minerSettings.requestTarget.donationPercent > 0.1f)
-	{
-	  float donAmount = minerSettings.requestTarget.donationPercent;
-	  if (donAmount > 1.5) { 
-	    donAmount -= 0.5f;
-	    xptClient_addDeveloperFeeEntry(xptClient, "RDrQYV7VHbnzUDX8BmcjoradKGVQaBcXXi", getFeeFromDouble(0.25f), false);  // jh00
-	    xptClient_addDeveloperFeeEntry(xptClient, "RNh5PSLpPmkNxB3PgoLnKzpM75rmkzfz5y", getFeeFromDouble(0.25f), false);  // clintar, windows port
-	  }
-	  xptClient_addDeveloperFeeEntry(xptClient, "RUhMA8bvsr48aC3WVj3aGf5p1zytPSz59o", getFeeFromDouble(donAmount), false);  // dga
-	}
+			if(minerSettings.requestTarget.donationPercent > 0.1f)
+			{
+				float donAmount = minerSettings.requestTarget.donationPercent;
+				if (donAmount > 1.5) { 
+					donAmount -= 0.5f;
+					xptClient_addDeveloperFeeEntry(xptClient, "RDrQYV7VHbnzUDX8BmcjoradKGVQaBcXXi", getFeeFromDouble(0.25f), false);  // jh00
+					xptClient_addDeveloperFeeEntry(xptClient, "RNh5PSLpPmkNxB3PgoLnKzpM75rmkzfz5y", getFeeFromDouble(0.25f), false);  // clintar, windows port
+				}
+				xptClient_addDeveloperFeeEntry(xptClient, "RUhMA8bvsr48aC3WVj3aGf5p1zytPSz59o", getFeeFromDouble(donAmount), false);  // dga
+			}
 			if( xptClient_connect(xptClient, &minerSettings.requestTarget) == false )
 			{
 				LeaveCriticalSection(&cs_xptClient);
@@ -542,7 +545,7 @@ sysctl(mib, 2, &numcpu, &len, NULL, 0);
 #elif defined(_WIN32)
 	SYSTEM_INFO sysinfo;
 	GetSystemInfo( &sysinfo );
-  numcpu = sysinfo.dwNumberOfProcessors;
+	numcpu = sysinfo.dwNumberOfProcessors;
 #endif
 
 	commandlineInput.numThreads = numcpu;
@@ -550,8 +553,8 @@ sysctl(mib, 2, &numcpu, &len, NULL, 0);
 	xptMiner_parseCommandline(argc, argv);
 	minerSettings.useGPU = commandlineInput.useGPU;
 	printf("----------------------------\n");
-	printf("  xptMiner/ric/dga (%s)\n", minerVersionString);
-	printf("  author: jh00 (xptminer) dga (ric core)\n");
+	printf("  xptMiner/ric/dga/pzb (%s)\n", minerVersionString);
+	printf("  author: jh00 (xptminer) dga (ric core) pzb(co-mining)\n");
 	printf("  http://ypool.net\n");
 	printf("----------------------------\n");
 	printf("Launching miner...\n");

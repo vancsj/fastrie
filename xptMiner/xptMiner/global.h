@@ -151,7 +151,7 @@ extern volatile uint32 totalRejectedShareCount;
 extern volatile uint32 total2ChainCount;
 extern volatile uint32 total3ChainCount;
 extern volatile uint32 total4ChainCount;
-
+extern volatile uint32 total5ChainCount;
 
 extern volatile uint32 monitorCurrentBlockHeight;
 extern volatile uint32 monitorCurrentBlockTime;

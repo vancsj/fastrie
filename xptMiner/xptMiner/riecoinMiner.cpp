@@ -484,16 +484,18 @@ void riecoin_process(minerRiecoinBlock_t* block)
 	       */
 
 	      /* Note start at 1 - we've already tested bias 0 */
-	      for (int i = 1; i < 6; i++) {
-		mpz_add_ui(z_temp, z_temp, primeTupleOffset[i]);
-		mpz_sub_ui(z_ft_n, z_temp, 1);
-		mpz_powm(z_ft_r, z_ft_b, z_ft_n, z_temp);
-		if (mpz_cmp_ui(z_ft_r, 1) == 0) {
-		  nPrimes++;
-		}
-                int candidatesRemaining = 5-i;
-                if ((nPrimes + candidatesRemaining) < 4) { continue; }
-	      }
+		  for (int i = 1; i < 6; i++) {
+			  mpz_add_ui(z_temp, z_temp, primeTupleOffset[i]);
+			  mpz_sub_ui(z_ft_n, z_temp, 1);
+			  mpz_powm(z_ft_r, z_ft_b, z_ft_n, z_temp);
+			  if (mpz_cmp_ui(z_ft_r, 1) == 0) {
+				  nPrimes++;
+			  }else {
+				break;
+			  }
+			  int candidatesRemaining = 5-i;
+			  if ((nPrimes + candidatesRemaining) < 4) { break; }
+		  }
 
 	      /* These statistics are a little confusing because of the interaction
 	       * with early-exit above.  They overcount relative to finding consecutive
@@ -503,8 +505,9 @@ void riecoin_process(minerRiecoinBlock_t* block)
 	      if (nPrimes >= 2) total2ChainCount++;
 	      if (nPrimes >= 3) total3ChainCount++;
 	      if (nPrimes >= 4) total4ChainCount++;
+		  if (nPrimes >= 5) total5ChainCount++;
 
-	      if (nPrimes < 4) continue;
+	      if (nPrimes < 5) continue;
 
 	      mpz_set(z_temp, z_primorial);
 	      mpz_mul_ui(z_temp, z_temp, loop);

@@ -4,14 +4,14 @@
 #CC = cc
 CC=x86_64-w64-mingw32-gcc
 CXX=x86_64-w64-mingw32-g++
-CXXFLAGS = -Wall -Wextra -std=c++0x -O2 -fomit-frame-pointer $(EXTRA_CXXFLAGS)
+CXXFLAGS = -Wall -Wextra -std=c++0x -O3 -fomit-frame-pointer $(EXTRA_CXXFLAGS)
 ifeq ($(OSVERSION),CYGWIN_NT-6.1)
 	#CXXFLAGS = -Wall -Wextra -std=gnu++0x -O2 -fomit-frame-pointer 
 	CXXFLAGS = -std=gnu++0x -O2 -fomit-frame-pointer -D_BSD_SOURCE $(EXTRA_CFLAGS)
 	CFLAGS = -std=gnu++0x -O2 -fomit-frame-pointer -D_BSD_SOURCE $(EXTRA_CFLAGS)
 endif
 
-CFLAGS = -Wall -Wextra -O2 -fomit-frame-pointer $(EXTRA_CFLAGS)
+CFLAGS = -Wall -Wextra -O3 -fomit-frame-pointer $(EXTRA_CFLAGS)
 
 
 OSVERSION := $(shell uname -s)
@@ -23,7 +23,7 @@ ifeq ($(INT_LIB),mpir)
        CXXFLAGS +=$(MPIR_DEF)
        LIBS+=-lmpir
 else
-       LIBS+=-lgmp -lgmpxx
+       LIBS+=-lgmp
 endif
 ifeq ($(OSVERSION),Linux)
 #	CFLAGS += -march=native 
@@ -98,7 +98,7 @@ xptminer$(EXTENSION): $(OBJS:xptMiner/%=xptMiner/%) $(JHLIB:xptMiner/jhlib/%=xpt
 	$(CXX) $(CFLAGS) $(LIBPATHS) $(INCLUDEPATHS) -static -o $@ $^ $(LIBS) -flto
 
 clean:
-	-rm -f xptminer
+	-rm -f xptminer$(EXTENSION)
 	-rm -f xptMiner/*.o
 	-rm -f xptMiner/jhlib/*.o
 
