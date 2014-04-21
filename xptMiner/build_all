@@ -6,8 +6,9 @@ MAKEFLAGS=
 MAKEFILE=Makefile.mingw
 
 make clean
+cp bdver2/libgmp.a /c/mingw64/lib/
 make ${MAKEFLAGS} -f ${MAKEFILE} BUILD_ARCH='-msse4 -mavx -mtune=bdver2 -march=bdver2 -static'
-mv -f xptminer.exe xptminer-avx-${VERSION}.exe
+mv -f xptminer.exe xptminer-bdver2-${VERSION}.exe
 
 #make clean
 #make ${MAKEFLAGS} -f ${MAKEFILE} BUILD_ARCH='-msse4 -static'

@@ -98,7 +98,7 @@ xptminer$(EXTENSION): $(OBJS:xptMiner/%=xptMiner/%) $(JHLIB:xptMiner/jhlib/%=xpt
 	$(CXX) $(CFLAGS) $(LIBPATHS) $(INCLUDEPATHS) -static -o $@ $^ $(LIBS) -flto
 
 clean:
-	-rm -f xptminer$(EXTENSION)
+	-rm -f xptminer.exe
 	-rm -f xptMiner/*.o
 	-rm -f xptMiner/jhlib/*.o
 
