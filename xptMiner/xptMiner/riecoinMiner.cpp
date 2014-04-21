@@ -37,7 +37,7 @@ unsigned int int_invert_mpz(mpz_t &z_a, uint32_t nPrime);
 
 void riecoin_init(uint64_t sieveMax)
 {
-        riecoin_primeTestLimit = sieveMax;
+	riecoin_primeTestLimit = sieveMax;
 	printf("Generating table of small primes for Riecoin...\n");
 	// generate prime table
 	riecoin_primeTestTable = (uint32*)malloc(sizeof(uint32)*(riecoin_primeTestLimit/4+10));
@@ -79,19 +79,19 @@ void riecoin_init(uint64_t sieveMax)
 	inverts = (int32_t *)malloc(sizeof(int32_t) * (riecoin_primeTestSize));
 
 	for (uint32_t i = 5; i < riecoin_primeTestSize; i++) {
-	  inverts[i] = int_invert_mpz(z_primorial, riecoin_primeTestTable[i]);
+		inverts[i] = int_invert_mpz(z_primorial, riecoin_primeTestTable[i]);
 	}
 
 	uint64_t high_segment_entries = 0;
 	double high_floats = 0.0;
 	riecoin_primeTestStoreOffsetsSize = 0;
 	for (uint32_t i = 5; i < riecoin_primeTestSize; i++) {
-	  uint32_t p = riecoin_primeTestTable[i];
-	  if (p < max_increments) {
-	    riecoin_primeTestStoreOffsetsSize++;
-	  } else {
-	    high_floats += ((6.0f * max_increments) / (double)p);
-	  }
+		uint32_t p = riecoin_primeTestTable[i];
+		if (p < max_increments) {
+			riecoin_primeTestStoreOffsetsSize++;
+		} else {
+			high_floats += ((6.0f * max_increments) / (double)p);
+		}
 	}
 	high_segment_entries = ceil(high_floats);
 
@@ -104,7 +104,6 @@ typedef uint32_t sixoff[6];
 thread_local uint8_t* riecoin_sieve = NULL;
 thread_local sixoff *offsets = NULL;
 thread_local uint32_t *segment_hits[maxiter];
-
 
 uint32 _getHexDigitValue(uint8 c)
 {
@@ -232,7 +231,7 @@ void riecoin_process(minerRiecoinBlock_t* block)
 		offsets = (sixoff *)malloc(offsize);
 		memset(offsets, 0, offsize);
 		for (int i = 0; i < maxiter; i++) {
-		  segment_hits[i] = (uint32_t *)malloc(sizeof(uint32_t) * num_entries_per_segment);
+			segment_hits[i] = (uint32_t *)malloc(sizeof(uint32_t) * num_entries_per_segment);
 		}
 	}
 	uint8* sieve = riecoin_sieve;
@@ -302,7 +301,7 @@ void riecoin_process(minerRiecoinBlock_t* block)
 	mpz_set(z_temp2, z_primorial);
 
 	uint32_t primeIndex = riecoin_primorialNumber;
-	
+
 	uint32_t off_offset = 0;
 	uint32_t startingPrimeIndex = primeIndex;
 	uint32_t n_dense = 0;
@@ -312,53 +311,53 @@ void riecoin_process(minerRiecoinBlock_t* block)
 	mpz_set(z_temp2, z_primorial);
 	uint32_t segment_counts[maxiter];
 	for (int i = 0; i < maxiter; i++) {
-	  segment_counts[i] = 0;
+		segment_counts[i] = 0;
 	}
 
 	//printf("primeIndex: %d  is %d\n", primeIndex, riecoin_primeTestTable[primeIndex]);
 	for( ; primeIndex < riecoin_primeTestSize; primeIndex++)
 	{
-	  uint32 p = riecoin_primeTestTable[primeIndex];
-	  int32_t inverted = inverts[primeIndex];
-	  bool is_once_only = false;
-	  if (p < riecoin_denseLimit) {
-	    n_dense++;
-	  } else if (p < max_increments) {
-	    n_sparse++;
-	  } else {
-	    n_once_only++;
-	    is_once_only = true;
-	  }
-
-	  /* Compute remainder = (rounded_up_target + offset)%p efficiently.  Instead of %p
-	   * in the inner loop, just do one test - the primeTupleOffets are all smaller
-	   * than the smallest prime in the sieve, and so can never increase reminder
-	   * too much. */
-	  uint32 remainder = mpz_tdiv_ui(z_temp, p);
-	  for (uint32 f = 0; f < 6; f++) {
-	    remainder += primeTupleOffset[f];
-	    if (remainder > p) {
-	      remainder -= p;
-	    }
-	    int64_t pa = p-remainder;
-	    uint64_t index = pa*inverted;
-	    index %= p;
-	    if (!is_once_only) {
-	      offsets[off_offset][f] = index;
-	    } else {
-	      if (index < max_increments) {
-		uint32_t segment = index>>riecoin_sieveBits;
-		uint32_t sc = segment_counts[segment];
-		if (sc >= num_entries_per_segment) { 
-		  printf("EEEEK segment %u  %u for prime %u with index %u is > %u\n", segment, sc, p, index, num_entries_per_segment); exit(-1);
+		uint32 p = riecoin_primeTestTable[primeIndex];
+		int32_t inverted = inverts[primeIndex];
+		bool is_once_only = false;
+		if (p < riecoin_denseLimit) {
+			n_dense++;
+		} else if (p < max_increments) {
+			n_sparse++;
+		} else {
+			n_once_only++;
+			is_once_only = true;
 		}
-		segment_hits[segment][sc] = index - (riecoin_sieveSize*segment);
-		segment_counts[segment]++;
-		n_once_only_used++;
-	      }
-	    }
-	  }
-	  off_offset++;
+
+		/* Compute remainder = (rounded_up_target + offset)%p efficiently.  Instead of %p
+		* in the inner loop, just do one test - the primeTupleOffets are all smaller
+		* than the smallest prime in the sieve, and so can never increase reminder
+		* too much. */
+		uint32 remainder = mpz_tdiv_ui(z_temp, p);
+		for (uint32 f = 0; f < 6; f++) {
+			remainder += primeTupleOffset[f];
+			if (remainder > p) {
+				remainder -= p;
+			}
+			int64_t pa = p-remainder;
+			uint64_t index = pa*inverted;
+			index %= p;
+			if (!is_once_only) {
+				offsets[off_offset][f] = index;
+			} else {
+				if (index < max_increments) {
+					uint32_t segment = index>>riecoin_sieveBits;
+					uint32_t sc = segment_counts[segment];
+					if (sc >= num_entries_per_segment) { 
+						printf("EEEEK segment %u  %u for prime %u with index %u is > %u\n", segment, sc, p, index, num_entries_per_segment); exit(-1);
+					}
+					segment_hits[segment][sc] = index - (riecoin_sieveSize*segment);
+					segment_counts[segment]++;
+					n_once_only_used++;
+				}
+			}
+		}
+		off_offset++;
 	}
 
 #if DEBUG
@@ -371,183 +370,183 @@ void riecoin_process(minerRiecoinBlock_t* block)
 #endif
 
 	/* Main processing loop:
-	 * 1)  Sieve "dense" primes;
-	 * 2)  Sieve "sparse" primes;
-	 * 3)  Sieve "so sparse they happen at most once" primes;
-	 * 4)  Scan sieve for candidates, test, report
-	 */
+	* 1)  Sieve "dense" primes;
+	* 2)  Sieve "sparse" primes;
+	* 3)  Sieve "so sparse they happen at most once" primes;
+	* 4)  Scan sieve for candidates, test, report
+	*/
 
 	uint32 countCandidates = 0;
 	uint32 countPrimes = 0;
 
 	for (int loop = 0; loop < maxiter; loop++) {
-	    __sync_synchronize(); /* gcc specific - memory barrier for checking height */
-	    if( block->height != monitorCurrentBlockHeight ) {
-	      break;
-	    }
-	    time_t cur_time = time(NULL);
-	    if ((cur_time - start_time) > NONCE_REGEN_SECONDS) {
-	      break;
-	    }
+		__sync_synchronize(); /* gcc specific - memory barrier for checking height */
+		if( block->height != monitorCurrentBlockHeight ) {
+			break;
+		}
+		time_t cur_time = time(NULL);
+		if ((cur_time - start_time) > NONCE_REGEN_SECONDS) {
+			break;
+		}
 #if DEBUG
-	    printf("Loop %d after %d seconds\n", loop, (cur_time-start_time)); fflush(stdout);
+		printf("Loop %d after %d seconds\n", loop, (cur_time-start_time)); fflush(stdout);
 #endif
 
-	    memset(sieve, 0, riecoin_sieveSize/8);
+		memset(sieve, 0, riecoin_sieveSize/8);
 
-	    for (unsigned int i = 0; i < n_dense; i++) {
-	      silly_sort_indexes(offsets[i]);
-	      uint32_t p = riecoin_primeTestTable[i+startingPrimeIndex];
-	      for (uint32 f = 0; f < 6; f++) {
-		while (offsets[i][f] < riecoin_sieveSize) {
-		  sieve[offsets[i][f]>>3] |= (1<<((offsets[i][f]&7)));
-		  offsets[i][f] += p;
+		for (unsigned int i = 0; i < n_dense; i++) {
+			silly_sort_indexes(offsets[i]);
+			uint32_t p = riecoin_primeTestTable[i+startingPrimeIndex];
+			for (uint32 f = 0; f < 6; f++) {
+				while (offsets[i][f] < riecoin_sieveSize) {
+					sieve[offsets[i][f]>>3] |= (1<<((offsets[i][f]&7)));
+					offsets[i][f] += p;
+				}
+				offsets[i][f] -= riecoin_sieveSize;
+			}
 		}
-		offsets[i][f] -= riecoin_sieveSize;
-	      }
-	    }
-	    
 
-	    uint32_t pending[16];
-	    uint32_t pending_pos = 0;
-	    for (int i = 0; i < 16; i++) { pending[i] = 0; }
-	    
-	    for (unsigned int i = n_dense; i < (n_dense+n_sparse); i++) {
-	      uint32_t p = riecoin_primeTestTable[i+startingPrimeIndex];
-	      for (uint32 f = 0; f < 6; f++) {
-		while (offsets[i][f] < riecoin_sieveSize) {
-		  add_to_pending(sieve, pending, pending_pos, offsets[i][f]);
-		  offsets[i][f] += p;
+
+		uint32_t pending[16];
+		uint32_t pending_pos = 0;
+		for (int i = 0; i < 16; i++) { pending[i] = 0; }
+
+		for (unsigned int i = n_dense; i < (n_dense+n_sparse); i++) {
+			uint32_t p = riecoin_primeTestTable[i+startingPrimeIndex];
+			for (uint32 f = 0; f < 6; f++) {
+				while (offsets[i][f] < riecoin_sieveSize) {
+					add_to_pending(sieve, pending, pending_pos, offsets[i][f]);
+					offsets[i][f] += p;
+				}
+				offsets[i][f] -= riecoin_sieveSize;
+			}
 		}
-		offsets[i][f] -= riecoin_sieveSize;
-	      }
-	    }
 
 #if 1
-	    for (uint32_t i = 0; i < segment_counts[loop]; i++) {
-	      add_to_pending(sieve, pending, pending_pos, segment_hits[loop][i]);
-	    }
+		for (uint32_t i = 0; i < segment_counts[loop]; i++) {
+			add_to_pending(sieve, pending, pending_pos, segment_hits[loop][i]);
+		}
 #endif
 
-	    for (int i = 0; i < 16; i++) {
-	      uint32_t old = pending[i];
-	      sieve[old>>3] |= (1<<(old&7));
-	    }
-	  
+		for (int i = 0; i < 16; i++) {
+			uint32_t old = pending[i];
+			sieve[old>>3] |= (1<<(old&7));
+		}
 
-	    // scan for candidates
-	    for(uint32 i=1; i<riecoin_sieveSize; i++) {
-	      if( sieve[(i)>>3] & (1<<((i)&7)) )
-		continue;
-	      countCandidates++;
 
-	      /* Check for a prime cluster.  A "share" on ypool is any
-	       * four or more of the elements prime, but for speed,
-	       * check further only if the first passes the primality
-	       * test.  The first test is the bottleneck for the
-	       * miner.
-	       *
-	       * Uses the fermat test - jh's code noted that it is slightly faster.
-	       * Could do an MR test as a follow-up, but the server can do this too
-	       * for the one-in-a-whatever case that Fermat is wrong.
-	       */
+		// scan for candidates
+		for(uint32 i=1; i<riecoin_sieveSize; i++) {
+			if( sieve[(i)>>3] & (1<<((i)&7)) )
+				continue;
+			countCandidates++;
 
-	      int nPrimes = 0;
-	      // p1
+			/* Check for a prime cluster.  A "share" on ypool is any
+			* four or more of the elements prime, but for speed,
+			* check further only if the first passes the primality
+			* test.  The first test is the bottleneck for the
+			* miner.
+			*
+			* Uses the fermat test - jh's code noted that it is slightly faster.
+			* Could do an MR test as a follow-up, but the server can do this too
+			* for the one-in-a-whatever case that Fermat is wrong.
+			*/
 
-	      mpz_set(z_temp, z_primorial);
-	      mpz_mul_ui(z_temp, z_temp, loop);
-	      mpz_mul_ui(z_temp, z_temp, riecoin_sieveSize);
-	      mpz_set(z_temp2, z_primorial);
-	      mpz_mul_ui(z_temp2, z_temp2, i);
-	      mpz_add(z_temp, z_temp, z_temp2);
-	      mpz_add(z_temp, z_temp, z_remainderPrimorial);
-	      mpz_add(z_temp, z_temp, z_target);
+			int nPrimes = 0;
+			// p1
 
-	      mpz_sub_ui(z_ft_n, z_temp, 1);
-	      mpz_powm(z_ft_r, z_ft_b, z_ft_n, z_temp);
-	      if (mpz_cmp_ui(z_ft_r, 1) != 0)
-		continue;
-	      else
-		countPrimes++;
+			mpz_set(z_temp, z_primorial);
+			mpz_mul_ui(z_temp, z_temp, loop);
+			mpz_mul_ui(z_temp, z_temp, riecoin_sieveSize);
+			mpz_set(z_temp2, z_primorial);
+			mpz_mul_ui(z_temp2, z_temp2, i);
+			mpz_add(z_temp, z_temp, z_temp2);
+			mpz_add(z_temp, z_temp, z_remainderPrimorial);
+			mpz_add(z_temp, z_temp, z_target);
 
-	      nPrimes++;
+			mpz_sub_ui(z_ft_n, z_temp, 1);
+			mpz_powm(z_ft_r, z_ft_b, z_ft_n, z_temp);
+			if (mpz_cmp_ui(z_ft_r, 1) != 0)
+				continue;
+			else
+				countPrimes++;
 
-	      /* Low overhead but still often enough */
-	      __sync_synchronize(); /* gcc specific - memory barrier for checking height */
-	      if( block->height != monitorCurrentBlockHeight ) {
-		break;
-	      }
+			nPrimes++;
 
-	      /* New definition of shares:  Any 4+ valid primes.  Search method 
-	       * is for 1st + any 3 to avoid doing too much primality testing.
-	       */
-
-	      /* Note start at 1 - we've already tested bias 0 */
-		  for (int i = 1; i < 6; i++) {
-			  mpz_add_ui(z_temp, z_temp, primeTupleOffset[i]);
-			  mpz_sub_ui(z_ft_n, z_temp, 1);
-			  mpz_powm(z_ft_r, z_ft_b, z_ft_n, z_temp);
-			  if (mpz_cmp_ui(z_ft_r, 1) == 0) {
-				  nPrimes++;
-			  }else {
+			/* Low overhead but still often enough */
+			__sync_synchronize(); /* gcc specific - memory barrier for checking height */
+			if( block->height != monitorCurrentBlockHeight ) {
 				break;
-			  }
-			  int candidatesRemaining = 5-i;
-			  if ((nPrimes + candidatesRemaining) < 4) { break; }
-		  }
+			}
 
-	      /* These statistics are a little confusing because of the interaction
-	       * with early-exit above.  They overcount relative to finding consecutive
-	       * primes, but undercount relative to counting all primes.  But they're
-	       * still useful for benchmarking within a variant of the program with
-	       * all else held equal. */
-	      if (nPrimes >= 2) total2ChainCount++;
-	      if (nPrimes >= 3) total3ChainCount++;
-	      if (nPrimes >= 4) total4ChainCount++;
-		  if (nPrimes >= 5) total5ChainCount++;
+			/* New definition of shares:  Any 4+ valid primes.  Search method 
+			* is for 1st + any 3 to avoid doing too much primality testing.
+			*/
 
-	      if (nPrimes < 5) continue;
+			/* Note start at 1 - we've already tested bias 0 */
+			for (int i = 1; i < 6; i++) {
+				mpz_add_ui(z_temp, z_temp, primeTupleOffset[i]);
+				mpz_sub_ui(z_ft_n, z_temp, 1);
+				mpz_powm(z_ft_r, z_ft_b, z_ft_n, z_temp);
+				if (mpz_cmp_ui(z_ft_r, 1) == 0) {
+					nPrimes++;
+				}else {
+					break;
+				}
+				int candidatesRemaining = 5-i;
+				if ((nPrimes + candidatesRemaining) < 4) { break; }
+			}
 
-	      mpz_set(z_temp, z_primorial);
-	      mpz_mul_ui(z_temp, z_temp, loop);
-	      mpz_mul_ui(z_temp, z_temp, riecoin_sieveSize);
-	      mpz_set(z_temp2, z_primorial);
-	      mpz_mul_ui(z_temp2, z_temp2, i);
-	      mpz_add(z_temp, z_temp, z_temp2);
-	      mpz_add(z_temp, z_temp, z_remainderPrimorial);
-	      mpz_add(z_temp, z_temp, z_target);
+			/* These statistics are a little confusing because of the interaction
+			* with early-exit above.  They overcount relative to finding consecutive
+			* primes, but undercount relative to counting all primes.  But they're
+			* still useful for benchmarking within a variant of the program with
+			* all else held equal. */
+			if (nPrimes >= 2) total2ChainCount++;
+			if (nPrimes >= 3) total3ChainCount++;
+			if (nPrimes >= 4) total4ChainCount++;
+			if (nPrimes >= 5) total5ChainCount++;
 
-	      mpz_sub(z_temp2, z_temp, z_target); // offset = tested - target
-	      // submit share
-	      uint8 nOffset[32];
-	      memset(nOffset, 0x00, 32);
+			if (nPrimes < 5) continue;
+
+			mpz_set(z_temp, z_primorial);
+			mpz_mul_ui(z_temp, z_temp, loop);
+			mpz_mul_ui(z_temp, z_temp, riecoin_sieveSize);
+			mpz_set(z_temp2, z_primorial);
+			mpz_mul_ui(z_temp2, z_temp2, i);
+			mpz_add(z_temp, z_temp, z_temp2);
+			mpz_add(z_temp, z_temp, z_remainderPrimorial);
+			mpz_add(z_temp, z_temp, z_target);
+
+			mpz_sub(z_temp2, z_temp, z_target); // offset = tested - target
+			// submit share
+			uint8 nOffset[32];
+			memset(nOffset, 0x00, 32);
 #if defined _WIN64 || __X86_64__
-	      for(uint32 d=0; d<std::min(32/8, z_temp2->_mp_size); d++)
-		{
-		  *(uint64*)(nOffset+d*8) = z_temp2->_mp_d[d];
-		}
+			for(uint32 d=0; d<std::min(32/8, z_temp2->_mp_size); d++)
+			{
+				*(uint64*)(nOffset+d*8) = z_temp2->_mp_d[d];
+			}
 #elif defined _WIN32 
-	      for(uint32 d=0; d<std::min(32/4, z_temp2->_mp_size); d++)
-		{
-		  *(uint32*)(nOffset+d*4) = z_temp2->_mp_d[d];
-		}
+			for(uint32 d=0; d<std::min(32/4, z_temp2->_mp_size); d++)
+			{
+				*(uint32*)(nOffset+d*4) = z_temp2->_mp_d[d];
+			}
 #elif defined __GNUC__
 #ifdef	__x86_64__
-	      for(uint32 d=0; d<std::min(32/8, z_temp2->_mp_size); d++)
-		{
-		  *(uint64*)(nOffset+d*8) = z_temp2->_mp_d[d];
-		}
+			for(uint32 d=0; d<std::min(32/8, z_temp2->_mp_size); d++)
+			{
+				*(uint64*)(nOffset+d*8) = z_temp2->_mp_d[d];
+			}
 #else  
-	      for(uint32 d=0; d<std::min(32/4, z_temp2->_mp_size); d++)
-		{
-		  *(uint32*)(nOffset+d*4) = z_temp2->_mp_d[d];
+			for(uint32 d=0; d<std::min(32/4, z_temp2->_mp_size); d++)
+			{
+				*(uint32*)(nOffset+d*4) = z_temp2->_mp_d[d];
+			}
+#endif
+#endif
+			totalShareCount++;
+			xptMiner_submitShare(block, nOffset);
 		}
-#endif
-#endif
-	      totalShareCount++;
-	      xptMiner_submitShare(block, nOffset);
-	    }
 	}
 	mpz_clears(z_target, z_temp, z_temp2, z_ft_r, z_ft_b, z_ft_n, z_remainderPrimorial, NULL);
 

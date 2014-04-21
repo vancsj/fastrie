@@ -24,6 +24,9 @@ volatile uint32 total3ChainCount = 0;
 volatile uint32 total4ChainCount = 0;
 volatile uint32 total5ChainCount = 0;
 
+// shared
+
+
 typedef struct  
 {
 	char* workername;
